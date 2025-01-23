@@ -1,7 +1,7 @@
 import requests
 import allure
 import pytest
-from src.data import Data
+from src.data import Data, ResponseJSON
 from src.urls import Urls
 from src.helpers import generate_login, generate_password, generate_first_name
 
@@ -16,9 +16,24 @@ class TestCourierCreate:
             'password': generate_password(),
             'firstName': generate_first_name()
         }
-        response = requests.post(Urls.URL_courier_create, data=payload)
-        assert response.status_code == 201, "Ожидался код ответа 201, но получен другой."
-        assert response.json() == {'ok': True}, "Тело ответа не соответствует ожидаемому формату."
+        courier_id = None
+
+        try:
+            response = requests.post(Urls.URL_courier_create, json=payload)
+            assert response.status_code == 201, "Ожидался код ответа 201, но получен другой."
+            response_body = response.json()
+            assert response_body == {'ok': True}, "Тело ответа не соответствует ожидаемому формату."
+
+            login_payload = {'login': payload['login'], 'password': payload['password']}
+            login_response = requests.post(Urls.URL_courier_login, json=login_payload)
+            assert login_response.status_code == 200, "Не удалось авторизоваться созданным курьером."
+            courier_id = login_response.json().get('id')
+            assert courier_id is not None, "Идентификатор курьера не был возвращен при авторизации."
+
+        finally:
+            if courier_id:
+                delete_response = requests.delete(f"{Urls.URL_courier_create}/{courier_id}")
+                assert delete_response.status_code == 200, f"Не удалось удалить курьера с id {courier_id}."
 
     @allure.title('Ошибка при создании курьера с занятым логином')
     @allure.description('Проверяем, что нельзя зарегистрировать курьера с уже существующим логином. Код ответа: 409.')
@@ -30,10 +45,7 @@ class TestCourierCreate:
         }
         response = requests.post(Urls.URL_courier_create, data=payload)
         assert response.status_code == 409, "Ожидался код ответа 409, но получен другой."
-        assert response.json() == {
-            'code': 409,
-            'message': 'Этот логин уже используется. Попробуйте другой.'
-        }, "Сообщение об ошибке не совпадает с ожидаемым."
+        assert response.json() == ResponseJSON.Response_409_create_account, "Сообщение об ошибке не совпадает с ожидаемым."
 
     @allure.title('Ошибка при создании курьера с пустыми обязательными полями')
     @allure.description('Тест проверяет невозможность создания курьера, если одно из обязательных полей пустое. Код ответа: 400.')
@@ -44,7 +56,4 @@ class TestCourierCreate:
     def test_create_courier_account_with_empty_required_fields(self, empty_credentials):
         response = requests.post(Urls.URL_courier_create, data=empty_credentials)
         assert response.status_code == 400, "Ожидался код ответа 400, но получен другой."
-        assert response.json() == {
-            'code': 400,
-            'message': 'Недостаточно данных для создания учетной записи'
-        }, "Сообщение об ошибке не совпадает с ожидаемым."
+        assert response.json() == ResponseJSON.Response_400_create_account, "Сообщение об ошибке не совпадает с ожидаемым."

@@ -1,7 +1,7 @@
 import requests
 import allure
 import pytest
-from src.data import Data
+from src.data import Data, ResponseJSON
 from src.urls import Urls
 from src.helpers import generate_login, generate_password
 
@@ -24,10 +24,7 @@ class TestCourierLogin:
     def test_courier_login_nonexistent_data_not_found(self, nonexistent_credentials):
         response = requests.post(Urls.URL_courier_login, data=nonexistent_credentials)
         assert response.status_code == 404, "Ожидался код ответа 404, но получен другой."
-        assert response.json() == {
-            'code': 404,
-            'message': 'Учетная запись не найдена'
-        }, "Сообщение об ошибке в ответе не совпадает с ожидаемым."
+        assert response.json() == ResponseJSON.Response_404_account, "Сообщение об ошибке в ответе не совпадает с ожидаемым."
 
     @allure.title('Ошибка аутентификации с пустым логином или паролем')
     @allure.description('Проверяем, что при отсутствии логина или пароля система возвращает ошибку. Код ответа: 400.')
@@ -38,7 +35,4 @@ class TestCourierLogin:
     def test_courier_login_empty_credentials_bad_request(self, empty_credentials):
         response = requests.post(Urls.URL_courier_login, data=empty_credentials)
         assert response.status_code == 400, "Ожидался код ответа 400, но получен другой."
-        assert response.json() == {
-            'code': 400,
-            'message': 'Недостаточно данных для входа'
-        }, "Сообщение об ошибке в ответе не совпадает с ожидаемым."
+        assert response.json() == ResponseJSON.Response_400_login, "Сообщение об ошибке в ответе не совпадает с ожидаемым."

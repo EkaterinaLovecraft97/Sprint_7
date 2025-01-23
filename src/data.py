@@ -54,3 +54,23 @@ class OrderData:
         'comment': 'Ring the doorbell twice.',
         'color': []
     }
+
+class ResponseJSON:
+    Response_400_create_account = {
+            'code': 400,
+            'message': 'Недостаточно данных для создания учетной записи'
+                    }
+    Response_400_login = {
+            'code': 400,
+            'message': 'Недостаточно данных для входа'
+                        }
+
+    Response_404_account = {
+            'code': 404,
+            'message': 'Учетная запись не найдена'
+                    }
+
+    Response_409_create_account = {
+            'code': 409,
+            'message': 'Этот логин уже используется. Попробуйте другой.'
+                    }
