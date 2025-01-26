@@ -12,6 +12,12 @@ def generate_password():
 def generate_first_name():
     return fake_ru.first_name()
 
+def new_courier_login_password():
+    return {
+        "login": generate_login(),
+        "password": generate_password(),
+        "firstName": generate_first_name()
+    }
 def validate_orders_structure(orders):
     for order in orders:
         if 'id' not in order:
